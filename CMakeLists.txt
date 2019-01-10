@@ -6,18 +6,20 @@ set (Tutorial_VERSION_MAJOR 0)
 set (Tutorial_VERSION_MINOR 1)
 
 set(OpenCV_DIR "C:/programmation/lib/opencv/build")
-find_package(OpenCV REQUIRED)
+find_package(OpenCV REQUIRED core)
 
 set(PCL_DIR "C:/programmation/lib/PCL 1.8.1/cmake")
 find_package(PCL 1.8 REQUIRED COMPONENTS common io)
-include_directories(${PCL_INCLUDE_DIRS})
+include_directories(${PCL_INCLUDE_DIRS}
+./)
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
 #add_library(../
 # add the executable
 add_executable (RSC 
-main.cpp)
+main.cpp
+./fonctions.cpp)
 
 # add libs 
 target_link_libraries (RSC 

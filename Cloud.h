@@ -2,12 +2,14 @@
 
 #include <iostream>
 #include <fstream>
+#include <ostream>
 #include <string>
 #include <pcl/point_types.h>
 #include <pcl/kdtree/kdtree.h>
 #include <pcl/search/search.h>
 #include <pcl/features/normal_3d.h>
 #include <pcl/kdtree/kdtree_flann.h>
+#include <opencv2/core.hpp>
 
 class Cloud {
 public:
@@ -20,6 +22,10 @@ public:
 	int computeKdTree();
 	int computeDensity(float radius);
 	int computeNormals();
+
+	int savePredictedLabels(cv::Mat matPredictedLabels);
+
+	int printFullCloud(std::ostream &flux);
 
 //protected:
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr XYZRGBACloud;

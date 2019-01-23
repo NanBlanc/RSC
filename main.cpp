@@ -46,21 +46,21 @@ int main(int argc, char **argv)
 		for (int j = 0; j < Mats[i].rows; j++)
 		{
 			labels.push_back(i);
-			std::cerr << i << "\n";
+			//std::cerr << i << "\n";
 		}
 		trainMat.push_back(Mats[i]);
 	}
 	std::cerr << "sizemat train : " << trainMat.size() << "\n";
 	std::cerr << "sizemat label : " << labels.size() << "\n";
 
-	std::cerr << "eeeeeeeeee\n";
-	cv::Ptr<cv::ml::StatModel> model = createModels(AlgoType::SIG_SVM);
-	std::cerr << "dddddddddd\n";
+
+	cv::Ptr<cv::ml::StatModel> model = createModels(AlgoType::RF);
+
 	cv::Ptr<cv::ml::TrainData> trainData = cv::ml::TrainData::create(trainMat, 0, labels);
-	std::cerr << "cccccccccc\n";
+
 	trainData->setTrainTestSplitRatio(0.2, true);
 	model->train(trainData);
-	std::cerr << "aaaaaaaaaaaa\n";
+
 	//auto y_predict_error = cv::OutputArray(labels);
 	//y_predict_error.clear();
 	//auto y_predict = cv::OutputArray(labels);
@@ -71,16 +71,14 @@ int main(int argc, char **argv)
 
 	auto error = model->calcError(trainData, true, error_output);
 	model->predict(Mats[0], predict_output);
-	std::cerr << "bbbbbbbb\n";
-	std::ofstream output("C:/Users/hobbe/Desktop/RSC_test/Projet_test/road_sub2_predict_svm.txt", std::ios::out | std::ios::trunc);
-	output << "//X Y Z R G B A Intensity NX NY NZ Label\n";
 
-	for (int i = 0; i < Mats[0].rows; i++) {
-		output << clouds[0].XYZRGBACloud->points[i].x << " " << clouds[0].XYZRGBACloud->points[i].y << " " << clouds[0].XYZRGBACloud->points[i].z << " "
-			<< (int)clouds[0].XYZRGBACloud->points[i].r << " " << (int)clouds[0].XYZRGBACloud->points[i].g << " " << (int)clouds[0].XYZRGBACloud->points[i].b << " "
-			<< (int)clouds[0].XYZRGBACloud->points[i].a << " " << clouds[0].intensityCloud->points[i].intensity << " " << clouds[0].normalsCloud->points[i].normal_x << " "
-			<< clouds[0].normalsCloud->points[i].normal_y << " " << clouds[0].normalsCloud->points[i].normal_z << " " << predict_output.at<float>(i,0) << "\n";
-	}
+	clouds[0].savePredictedLabels(predict_output);
+	std::ofstream output("C:/Users/hobbe/Desktop/RSC_test/Projet_test/road_sub2_predict_rf.txt", std::ios::out | std::ios::trunc);
+	output << "//X Y Z R G B A Intensity NX NY NZ Label\n";
+	clouds[0].printFullCloud(output);
+
+	std::cerr << error;
+	std::cerr << "END\n";
 	return 0;
 }
 

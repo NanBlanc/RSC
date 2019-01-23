@@ -166,3 +166,25 @@ int Cloud::computeNormals()
 	//}
 	return 0;
 }
+
+int Cloud::savePredictedLabels(cv::Mat matPredictedLabels) {
+	for (int i = 0; i < matPredictedLabels.rows; i++)// matPredictedLabels.rows
+	{
+		this->label.push_back(matPredictedLabels.at<float>(i, 0));
+	}
+	return 0;
+}
+
+int Cloud::printFullCloud(std::ostream &flux)
+{
+	flux.precision(12);
+	for (int i = 0; i < this->XYZRGBACloud->size(); i++)//this->XYZRGBACloud->size()
+	{
+		//flux << "1";
+		flux << this->XYZRGBACloud->points[i].x << " " << this->XYZRGBACloud->points[i].y << " " << this->XYZRGBACloud->points[i].z << " "
+			<< (int)this->XYZRGBACloud->points[i].r << " " << (int)this->XYZRGBACloud->points[i].g << " " << (int)this->XYZRGBACloud->points[i].b << " "
+			<< (int)this->XYZRGBACloud->points[i].a << " " << this->intensityCloud->points[i].intensity << " " << this->normalsCloud->points[i].normal_x << " "
+			<< this->normalsCloud->points[i].normal_y << " " << this->normalsCloud->points[i].normal_z << " " << this->label[i] << "\n";
+	}
+	return 0;
+}

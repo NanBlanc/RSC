@@ -1,0 +1,12 @@
+
+
+class GroundTruth {
+public:
+
+
+
+protected:
+
+
+
+};

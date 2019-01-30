@@ -175,6 +175,14 @@ int Cloud::savePredictedLabels(cv::Mat matPredictedLabels) {
 	return 0;
 }
 
+int Cloud::savePredictedLabels(std::vector<int> vecPredictedLabels) {
+	for (int i = 0; i < vecPredictedLabels.size(); i++)// matPredictedLabels.rows
+	{
+		this->label.push_back(vecPredictedLabels[i]);
+	}
+	return 0;
+}
+
 int Cloud::printFullCloud(std::ostream &flux)
 {
 	flux.precision(12);

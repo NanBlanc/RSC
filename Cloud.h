@@ -24,6 +24,7 @@ public:
 	int computeNormals();
 
 	int savePredictedLabels(cv::Mat matPredictedLabels);
+	int Cloud::savePredictedLabels(std::vector<int> vecPredictedLabels);
 
 	int printFullCloud(std::ostream &flux);
 

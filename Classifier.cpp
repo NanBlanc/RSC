@@ -1,24 +1,32 @@
 #include "Classifier.h"
 
-Classifier::Classifier(GroundTruth GT, Classifier::AlgoType algoType) : m_algoType(algoType)
+Classifier::Classifier(GroundTruth GT, Classifier::AlgoType algoType, double splitRatio,bool loaded) : m_algoType(algoType)
 {
-	cv::Mat tempMat;
-	std::vector<int> labels;
-	for (int i = 0; i < GT.m_ptrsCloud.size(); i++)
+	if(loaded)
 	{
-		tempMat.push_back(formatInput(GT.m_ptrsCloud[i]));
-		for(int j=0; j < GT.m_ptrsCloud[i].XYZRGBACloud->size();j++) //creation of 1 label per point in each cloud
-			labels.push_back(GT.m_cloudLabel[i]);
-
+		this->m_model = cv::Ptr<cv::ml::RTrees>();
+		this->load("C:/Users/hobbe/Desktop/RSC_test/Projet_test/models2.yml");
 	}
-	std::cerr << tempMat.row(0) << "\n";
-	//for (int i = 0; i < labels.size(); i++)
-	//	std::cerr << labels[i] << ", ";
-	this->m_trainData= cv::ml::TrainData::create(tempMat, 0, labels);
-	this->m_trainData->setTrainTestSplitRatio(0.2, true); //train size = 0.2*TOTAL
-	this->testResponse = m_trainData->getTestResponses();
-	//std::cerr << "test labels2" << this->testResponse << "\n";
-	m_model= createModels(AlgoType::RF);
+	else
+	{
+		cv::Mat tempMat;
+		std::vector<int> labels;
+		for (int i = 0; i < GT.m_ptrsCloud.size(); i++)
+		{
+			tempMat.push_back(formatInput(GT.m_ptrsCloud[i]));
+			for (int j = 0; j < GT.m_ptrsCloud[i].XYZRGBACloud->size(); j++) //creation of 1 label per point in each cloud
+				labels.push_back(GT.m_cloudLabel[i]);
+
+		}
+		std::cerr << tempMat.row(0) << "\n";
+		//for (int i = 0; i < labels.size(); i++)
+		//	std::cerr << labels[i] << ", ";
+		this->m_trainData = cv::ml::TrainData::create(tempMat, 0, labels);
+		this->m_trainData->setTrainTestSplitRatio(splitRatio, true); //train size = 0.2*TOTAL
+		this->testResponse = m_trainData->getTestResponses();
+		//std::cerr << "test labels2" << this->testResponse << "\n";
+		this->m_model = createModels(AlgoType::RF);
+	}
 }
 
 cv::Mat Classifier::formatInput(Cloud const& cloud)
@@ -112,6 +120,83 @@ int Classifier::train()
 	return 0;
 }
 
+int Classifier::test()
+{
+	std::vector<int> error_output;
+	auto error = this->m_model->calcError(this->m_trainData, true, error_output);
+
+	computeClassifierDescriptor(error_output);
+	return 0;
+}
+
+int Classifier::computeClassifierDescriptor(std::vector<int> error_output)
+{
+	std::vector<int> label = this->m_trainData->getClassLabels();
+	int nb_label = label.size();
+	cv::Mat confusion = cv::Mat::zeros(nb_label + 1, nb_label + 1, CV_32F);
+
+	std::vector<int> responses = this->testResponse;
+	for (int i = 0; i < error_output.size(); i++)
+	{
+		//remplissage par ligne
+		//vrai positif
+		if (error_output[i] == responses[i])
+			confusion.at<float>(responses[i] - 1, responses[i] - 1) += 1;
+
+		//Vrai négatif
+		else if (error_output[i] != responses[i])
+			confusion.at<float>(error_output[i] - 1, responses[i] - 1) += 1;
+	}
+
+	double totalSum = 0;
+	double niiSum = 0;
+	double lxcSum = 0;
+	for (int i = 0; i < nb_label; i++)
+	{
+
+		//précision utilisateur
+		double sumU = 0;
+		for (int j = 0; j < nb_label; j++) {
+			sumU += confusion.at<float>(i, j);
+		}
+		confusion.at<float>(i, nb_label) = confusion.at<float>(i, i) / sumU;
+		//précision prodocteur
+		double sumP = 0;
+		for (int j = 0; j < nb_label; j++) {
+			sumP += confusion.at<float>(j, i);
+		}
+		confusion.at<float>(nb_label, i) = confusion.at<float>(i, i) / sumP;
+		//precision total
+		niiSum += confusion.at<float>(i, i);
+		totalSum += sumU;
+		lxcSum += sumU * sumP;
+		//std::cerr << "lxc : " << lxcSum << " " << sumU << " " << sumP << "\n";
+	}
+	confusion.at<float>(nb_label, nb_label) = totalSum;
+	
+	//saving data
+	double n = nb_label * nb_label;
+	this->confusionMatrix = confusion;
+	this->overallPrecision = niiSum / totalSum;
+	this->kappaIndice = std::abs(n*niiSum - lxcSum) / (n*n - lxcSum);
+	this->dimensionImportance = this->m_model->getVarImportance();
+
+	return 0;
+}
+
+int Classifier::printClassifierDescriptor(std::ostream &flux)
+{
+	flux << "Confusion Matrix : \n";
+	flux << this->confusionMatrix << "\n";
+	flux << "Overall Precision : \n";
+	flux << this->overallPrecision << "\n";
+	flux << "Kappa Indice : \n";
+	flux << this->kappaIndice << "\n";
+	flux << "Attribute Importance : \n";
+	flux << this->dimensionImportance << "\n";
+	return 0;
+}
+
 int Classifier::predict(Cloud& cloud2predict, std::vector<int>& outputPredict)
 {
 	cv::Mat inputPredict = formatInput(cloud2predict);
@@ -132,5 +217,16 @@ int Classifier::predict(cv::Mat& inputPredict, std::vector<int>& outputPredict)
 		//std::cerr << "oRow" << oRow << "\n";
 		outputPredict[i]=oRow.at<float>(0,0);
 	}
+	return 0;
+}
+
+int Classifier::load(std::string loadPath)
+{
+	this->m_model=cv::ml::StatModel::load<cv::ml::RTrees>("C:/Users/hobbe/Desktop/RSC_test/Projet_test/models.yml");
+	return 0;
+}
+int Classifier::save(std::string savePath)
+{
+	this->m_model->save(savePath);
 	return 0;
 }

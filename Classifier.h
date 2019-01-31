@@ -1,5 +1,8 @@
 #pragma once
 
+#include <iostream>
+#include <fstream>
+#include <ostream>
 #include <opencv2/core.hpp>
 #include <opencv2/ml.hpp>
 #include <opencv2/dnn.hpp>
@@ -13,17 +16,20 @@ public:
 	enum AlgoType { RF, SIG_SVM };
 
 
-	Classifier(GroundTruth GT, AlgoType algoType);
+	Classifier(GroundTruth GT, AlgoType algoType, double splitRatio,bool loaded = false);
 
 	int predict(cv::Mat& inputPredict, std::vector<int>& outputPredict);
 	int predict(Cloud& cloud2predict, std::vector<int>& outputPredict);
 	int train();
+	int test();
 
-	int load();
-	int save;
+	int load(std::string loadPath);
+	int save(std::string savePath);
 
+	int printClassifierDescriptor(std::ostream &flux);
 
 	//protected:
+	int computeClassifierDescriptor(std::vector<int> error_output);
 	cv::Mat formatInput(Cloud const& cloud);
 	cv::Ptr<cv::ml::RTrees> createModels(AlgoType AT);
 
@@ -31,4 +37,10 @@ public:
 	cv::Ptr<cv::ml::RTrees> m_model;
 	cv::Ptr<cv::ml::TrainData> m_trainData;
 	cv::Mat testResponse;
+
+	cv::Mat confusionMatrix;
+	double overallPrecision;
+	double kappaIndice;
+	cv::Mat	dimensionImportance;
+
 };

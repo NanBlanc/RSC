@@ -14,6 +14,9 @@
 
 int main(int argc, char **argv)
 {
+	clock_t t0;
+	clock_t t1;
+
 	std::cerr << "START\n";
 	std::string repos_proj = argv[1];
 	std::cerr.precision(12);
@@ -54,75 +57,32 @@ int main(int argc, char **argv)
 
 	//openCV
 	//classifier
-	Classifier C_RF(GT,Classifier::AlgoType::RF);
+	Classifier C_RF(GT, Classifier::AlgoType::RF, 0.2,true);
 
 
-	//train
-	std::cerr << "Training ... ";
-	clock_t t0 = clock();
-	C_RF.train();
-	clock_t t1 = clock();
-	std::cerr << (t1 - t0) / static_cast<float>(CLOCKS_PER_SEC) << "s" << std::endl;
+	////train
+	//std::cerr << "Training ... ";
+	//t0 = clock();
+	//C_RF.train();
+	//t1 = clock();
+	//std::cerr << (t1 - t0) / static_cast<float>(CLOCKS_PER_SEC) << "s" << std::endl;
 
-	//std::cerr << "total size: " << C_RF.m_trainData->getSamples().rows << "\n";
-	//std::cerr << "subset train size: " << C_RF.m_trainData->getTrainSamples().rows << "\n";
-	//std::cerr << "subset test size: " << C_RF.m_trainData->getTestSamples().rows << "\n";
-	std::vector<int> error_output;
-	auto error = C_RF.m_model->calcError(C_RF.m_trainData, true, error_output);
+	////test
+	//std::cerr << "Testing ... ";
+	//t0 = clock();
+	//C_RF.test();
+	//t1 = clock();
+	//std::cerr << (t1 - t0) / static_cast<float>(CLOCKS_PER_SEC) << "s" << std::endl;
 
-	int nb_label = GT.m_ptrsCloud.size();
-	std::vector<int> label=C_RF.m_trainData->getClassLabels();
-	cv::Mat confusion=cv::Mat::zeros(nb_label+1,nb_label+1, CV_32F);
+	//C_RF.printClassifierDescriptor(std::cerr);
 
-	std::vector<int> reponse = C_RF.testResponse;
-	for (int i = 0; i < error_output.size(); i++) 
-	{
-		//remplissage par ligne
-		//vrai positif
-		if (error_output[i] == reponse[i])
-			confusion.at<float>(reponse[i] - 1, reponse[i] - 1) += 1;
-		
-		//Vrai négatif
-		else if (error_output[i] != reponse[i])
-			confusion.at<float>(error_output[i] - 1, reponse[i] - 1) += 1;
-	}
+	////saving
+	//std::cerr << "Saving ... ";
+	//t0 = clock();
+	//C_RF.save("C:/Users/hobbe/Desktop/RSC_test/Projet_test/models2.yml");
+	//t1 = clock();
+	//std::cerr << (t1 - t0) / static_cast<float>(CLOCKS_PER_SEC) << "s" << std::endl;
 
-	double totalSum = 0;
-	double niiSum = 0;
-	double lxcSum = 0;
-	for (int i = 0; i < nb_label; i++)
-	{
-
-		//précision utilisateur
-		double sumU = 0;
-		for (int j = 0; j < nb_label; j++) {
-			sumU += confusion.at<float>(i, j);
-		}
-		confusion.at<float>(i, nb_label) = confusion.at<float>(i, i) / sumU;
-		//précision prodocteur
-		double sumP = 0;
-		for (int j = 0; j < nb_label; j++) {
-			sumP += confusion.at<float>(j, i);
-		}
-		confusion.at<float>(nb_label, i) = confusion.at<float>(i, i) / sumP;
-		//precision total
-		niiSum += confusion.at<float>(i, i);
-		totalSum += sumU;
-		lxcSum += sumU * sumP;
-		std::cerr<<"lxc : "<< lxcSum <<" "<< sumU <<" "<<sumP<<"\n";
-	}
-	double overallPrecision = niiSum / totalSum;
-	double n = nb_label * nb_label;
-	double kappa = std::abs(n*niiSum - lxcSum) / (n*n - lxcSum);
-	std::cerr << "overallPrecision " << niiSum << " " << totalSum << " " << overallPrecision << " "<<kappa<<"\n";
-	std::cerr << "confusion matx : \n" << confusion << "\n";
-
-
-
-
-	//std::cerr << "mat eroor: " << error_output << "\n";
-	cv::Mat	varImp = C_RF.m_model->getVarImportance();
-	std::cerr << "mat importance: " << varImp << "\n";
 
 
 	//predict

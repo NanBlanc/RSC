@@ -1,6 +1,6 @@
 #include "Classifier.h"
 
-Classifier::Classifier(GroundTruth GT, AlgoType algoType) : m_algoType(algoType)
+Classifier::Classifier(GroundTruth GT, Classifier::AlgoType algoType) : m_algoType(algoType)
 {
 	cv::Mat tempMat;
 	std::vector<int> labels;
@@ -9,9 +9,15 @@ Classifier::Classifier(GroundTruth GT, AlgoType algoType) : m_algoType(algoType)
 		tempMat.push_back(formatInput(GT.m_ptrsCloud[i]));
 		for(int j=0; j < GT.m_ptrsCloud[i].XYZRGBACloud->size();j++) //creation of 1 label per point in each cloud
 			labels.push_back(GT.m_cloudLabel[i]);
+
 	}
 	std::cerr << tempMat.row(0) << "\n";
-	m_trainData= cv::ml::TrainData::create(tempMat, 0, labels);
+	//for (int i = 0; i < labels.size(); i++)
+	//	std::cerr << labels[i] << ", ";
+	this->m_trainData= cv::ml::TrainData::create(tempMat, 0, labels);
+	this->m_trainData->setTrainTestSplitRatio(0.2, true); //train size = 0.2*TOTAL
+	this->testResponse = m_trainData->getTestResponses();
+	//std::cerr << "test labels2" << this->testResponse << "\n";
 	m_model= createModels(AlgoType::RF);
 }
 
@@ -41,9 +47,10 @@ cv::Mat Classifier::formatInput(Cloud const& cloud)
 }
 
 
-cv::Ptr<cv::ml::StatModel> Classifier::createModels(AlgoType AT)
+cv::Ptr<cv::ml::RTrees> Classifier::createModels(AlgoType AT)
 {
-	cv::Ptr<cv::ml::StatModel> modelPtr;
+	//cv::Ptr<cv::ml::StatModel> modelPtr;
+	cv::Ptr<cv::ml::RTrees> modelPtr;
 
 	switch (AT) {
 	case AlgoType::RF:
@@ -56,38 +63,39 @@ cv::Ptr<cv::ml::StatModel> Classifier::createModels(AlgoType AT)
 		criter.maxCount = 5000;
 
 		// parameters for random forest
-		random_forest->setMaxCategories(2);
-		random_forest->setMaxDepth(3000);
-		random_forest->setMinSampleCount(1);
+		random_forest->setMaxCategories(15);
+		random_forest->setMaxDepth(25);
+		random_forest->setMinSampleCount(5);
 		random_forest->setTruncatePrunedTree(false);
 		random_forest->setUse1SERule(false);
 		random_forest->setUseSurrogates(false);
 		random_forest->setPriors(cv::Mat());
 		random_forest->setTermCriteria(criter);
 		random_forest->setCVFolds(1);
+		random_forest->setCalculateVarImportance(true);
 
 		modelPtr = random_forest;
 	}
 	break;
-	case AlgoType::SIG_SVM:
-	{
-		auto sigmoid_svm = cv::ml::SVM::create();
+	//case AlgoType::SIG_SVM:
+	//{
+	//	auto sigmoid_svm = cv::ml::SVM::create();
 
-		auto criter_svm = cv::TermCriteria();
-		criter_svm.type = CV_TERMCRIT_EPS;
-		criter_svm.epsilon = 1e-10;
+	//	auto criter_svm = cv::TermCriteria();
+	//	criter_svm.type = CV_TERMCRIT_EPS;
+	//	criter_svm.epsilon = 1e-10;
 
-		// parameters for rbf support vector machines
-		sigmoid_svm->setC(100);
-		sigmoid_svm->setTermCriteria(criter_svm);
-		sigmoid_svm->setCoef0(0.3);
-		sigmoid_svm->setKernel(sigmoid_svm->SIGMOID);
-		sigmoid_svm->setGamma(0.1);
-		sigmoid_svm->setType(sigmoid_svm->C_SVC);
+	//	// parameters for rbf support vector machines
+	//	sigmoid_svm->setC(100);
+	//	sigmoid_svm->setTermCriteria(criter_svm);
+	//	sigmoid_svm->setCoef0(0.3);
+	//	sigmoid_svm->setKernel(sigmoid_svm->SIGMOID);
+	//	sigmoid_svm->setGamma(0.1);
+	//	sigmoid_svm->setType(sigmoid_svm->C_SVC);
 
-		modelPtr = sigmoid_svm;
-	}
-	break;
+	//	modelPtr = sigmoid_svm;
+	//}
+	//break;
 	}
 
 	return modelPtr;
@@ -96,7 +104,11 @@ cv::Ptr<cv::ml::StatModel> Classifier::createModels(AlgoType AT)
 
 int Classifier::train()
 {
+	auto reponse2 = m_trainData->getTestResponses();
+	//std::cerr << "AVANTTRAIN" << reponse2 << "\n";
 	m_model->train(m_trainData);
+	auto reponse3 = m_trainData->getTestResponses();
+	//std::cerr << "APRESTRAIN" << reponse3 << "\n";
 	return 0;
 }
 

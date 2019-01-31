@@ -25,10 +25,10 @@ public:
 
 	//protected:
 	cv::Mat formatInput(Cloud const& cloud);
-	cv::Ptr<cv::ml::StatModel> createModels(AlgoType AT);
+	cv::Ptr<cv::ml::RTrees> createModels(AlgoType AT);
 
 	AlgoType m_algoType;
-	cv::Ptr<cv::ml::StatModel> m_model;
+	cv::Ptr<cv::ml::RTrees> m_model;
 	cv::Ptr<cv::ml::TrainData> m_trainData;
-
+	cv::Mat testResponse;
 };

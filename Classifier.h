@@ -7,6 +7,7 @@
 #include <opencv2/ml.hpp>
 #include <opencv2/dnn.hpp>
 #include <omp.h>  // include OpenMP
+#include <cmath>
 
 #include "Cloud.h"
 #include "GroundTruth.h"

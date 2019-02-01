@@ -1,34 +1,27 @@
+
 #include "Cloud.h"
-
-//part2
-#include <opencv2/core.hpp>
-#include <opencv2/ml.hpp>
-#include <opencv2/dnn.hpp>
-#include <omp.h>  // include OpenMP
-
-#include "fonctions.h"
 #include "Classifier.h"
 #include "GroundTruth.h"
+#include "fonctions.h"
 
-#include <cmath>
 
 int main(int argc, char **argv)
 {
-	clock_t t0;
-	clock_t t1;
-
-	std::cerr << "START\n";
-	std::string repos_proj = argv[1];
-	std::cerr.precision(12);
+	std::cerr << "---/-/-/-/-/RSC\\-\\-\\-\\-\\-\\---\n";
 	//testLibLas();
 	//testPCL();
 	//testOpenCV();
+	clock_t t0;
+	clock_t t1;
 
-	//std::vector<Cloud> clouds;
-	//clouds.push_back(Cloud("C:/Users/hobbe/Desktop/RSC_test/Projet_test/road_sub2.txt"));
-	//clouds.push_back(Cloud("C:/Users/hobbe/Desktop/RSC_test/Projet_test/vertite_terrain/1/road_sub2_class_bat.txt"));
-	//clouds.push_back(Cloud("C:/Users/hobbe/Desktop/RSC_test/Projet_test/vertite_terrain/2/road_sub2_class_veget.txt"));
-	//clouds.push_back(Cloud("C:/Users/hobbe/Desktop/RSC_test/Projet_test/vertite_terrain/3/road_sub2_class_sol.txt"));
+	std::cerr.precision(12);
+
+	InArgs flags = Tools::ArgParser(argc, argv);
+	//std::cerr << "falgs : ";
+	//std::cerr << flags.projectPath << "," << flags.train << "," << flags.saveModel << ","
+	//	<< flags.savePath << "," << flags.predict << "," << flags.loadModel << "," << flags.loadPath << ",\n";
+
+
 
 	//load clouds
 	Cloud cloud2Predict("C:/Users/hobbe/Desktop/RSC_test/Projet_test/road_sub2.txt");
@@ -57,52 +50,54 @@ int main(int argc, char **argv)
 
 	//openCV
 	//classifier
-	Classifier C_RF(GT, Classifier::AlgoType::RF, 0.2,true);
+	Classifier C_RF(GT, Classifier::AlgoType::RF, 0.2,flags.loadModel);
 
+	//train
+	if (flags.train) {
+		std::cerr << "Training ... ";
+		t0 = clock();
+		C_RF.train();
+		t1 = clock();
+		std::cerr << (t1 - t0) / static_cast<float>(CLOCKS_PER_SEC) << "s" << std::endl;
 
-	////train
-	//std::cerr << "Training ... ";
-	//t0 = clock();
-	//C_RF.train();
-	//t1 = clock();
-	//std::cerr << (t1 - t0) / static_cast<float>(CLOCKS_PER_SEC) << "s" << std::endl;
+		//test
+		std::cerr << "Testing ... ";
+		t0 = clock();
+		C_RF.test();
+		t1 = clock();
+		std::cerr << (t1 - t0) / static_cast<float>(CLOCKS_PER_SEC) << "s" << std::endl;
 
-	////test
-	//std::cerr << "Testing ... ";
-	//t0 = clock();
-	//C_RF.test();
-	//t1 = clock();
-	//std::cerr << (t1 - t0) / static_cast<float>(CLOCKS_PER_SEC) << "s" << std::endl;
+		C_RF.printClassifierDescriptor(std::cerr);
+	}
 
-	//C_RF.printClassifierDescriptor(std::cerr);
-
-	////saving
-	//std::cerr << "Saving ... ";
-	//t0 = clock();
-	//C_RF.save("C:/Users/hobbe/Desktop/RSC_test/Projet_test/models2.yml");
-	//t1 = clock();
-	//std::cerr << (t1 - t0) / static_cast<float>(CLOCKS_PER_SEC) << "s" << std::endl;
-
+	//saving
+	if (flags.saveModel) {
+		std::cerr << "Saving ... ";
+		t0 = clock();
+		C_RF.save("C:/Users/hobbe/Desktop/RSC_test/Projet_test/models2.yml");
+		t1 = clock();
+		std::cerr << (t1 - t0) / static_cast<float>(CLOCKS_PER_SEC) << "s" << std::endl;
+	}
 
 
 	//predict
-	std::vector<int> predict_output;
+	if (flags.predict) {
+		std::vector<int> predict_output;
 
-	std::cerr << "Prediction ... ";
-	t0 = clock();
-	C_RF.predict(cloud2Predict, predict_output);
-	t1 = clock();
-	std::cerr << (t1 - t0) / static_cast<float>(CLOCKS_PER_SEC) << "s" << std::endl;
+		std::cerr << "Prediction ... ";
+		t0 = clock();
+		C_RF.predict(cloud2Predict, predict_output);
+		t1 = clock();
+		std::cerr << (t1 - t0) / static_cast<float>(CLOCKS_PER_SEC) << "s" << std::endl;
 
-
-	//out
-	cloud2Predict.savePredictedLabels(predict_output);
-	std::ofstream output("C:/Users/hobbe/Desktop/RSC_test/Projet_test/road_sub2_predict_rf_new.txt", std::ios::out | std::ios::trunc);
-	output << "//X Y Z R G B A Intensity NX NY NZ Label\n";
-	cloud2Predict.printFullCloud(output);
-
+		//out
+		cloud2Predict.savePredictedLabels(predict_output);
+		std::ofstream output("C:/Users/hobbe/Desktop/RSC_test/Projet_test/road_sub2_predict_rf_new.txt", std::ios::out | std::ios::trunc);
+		output << "//X Y Z R G B A Intensity NX NY NZ Label\n";
+		cloud2Predict.printFullCloud(output);
+	}
 
 	//std::cerr << error;
-	std::cerr << "END\n";
+	std::cerr << "---/-/-/-/-/END\\-\\-\\-\\-\\-\\---\n";
 	return 0;
 }

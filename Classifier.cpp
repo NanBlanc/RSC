@@ -188,9 +188,9 @@ int Classifier::printClassifierDescriptor(std::ostream &flux)
 {
 	flux << "Confusion Matrix : \n";
 	flux << this->confusionMatrix << "\n";
-	flux << "Overall Precision : \n";
+	flux << "Overall Precision : ";
 	flux << this->overallPrecision << "\n";
-	flux << "Kappa Indice : \n";
+	flux << "Kappa Indice : ";
 	flux << this->kappaIndice << "\n";
 	flux << "Attribute Importance : \n";
 	flux << this->dimensionImportance << "\n";

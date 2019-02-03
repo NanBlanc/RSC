@@ -8,12 +8,13 @@ InArgs Tools::argParser(int argc, char** argv) {
 		exitRSC("Welcome on RSC, Please select a running mode : \n\t - all\n\t - train\n\t - classify\n\t - help\n");
 	if (argc < 3 && (std::string(argv[1]) == "-all" || std::string(argv[1]) == "-train" || std::string(argv[1]) == "-classify"))
 		exitRSC("ERROR : Missing Project Path, Please read help [-h] or [-help]");
-
+	if (std::string(argv[1]) == "-vivi") {easterEgg(); exitRSC("");} //don't ask any questions
 	if (std::string(argv[1]) == "-h" || std::string(argv[1]) == "-help")
 	{
 		Tools::printHelp();
 		exitRSC("");
 	}
+	
 
 	input.projectPath = argv[2];
 	if (std::string(argv[1]) == "-all")

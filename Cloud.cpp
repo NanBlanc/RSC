@@ -196,3 +196,16 @@ int Cloud::printFullCloud(std::ostream &flux)
 	}
 	return 0;
 }
+
+void Cloud::saveTxt(std::string projectPath)
+{
+	boost::filesystem::path p(this->path);
+	std::string cloudName = p.filename().string();
+	std::string outPath = projectPath + "\\out_clouds";
+	std::cerr << "OUT::" << outPath << "\\" << cloudName << "\n";
+
+
+	std::ofstream output(outPath +"\\"+cloudName, std::ios::out | std::ios::trunc);
+	output << "//X Y Z R G B A Intensity NX NY NZ Label\n";
+	this->printFullCloud(output);
+}

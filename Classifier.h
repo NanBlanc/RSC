@@ -17,10 +17,11 @@ public:
 	enum AlgoType { RF, SIG_SVM };
 
 
-	Classifier(GroundTruth GT, AlgoType algoType, double splitRatio,bool loaded = false);
+	Classifier(GroundTruth GT, AlgoType algoType, InArgs flags, double splitRatio = 0.2);
 
 	int predict(cv::Mat& inputPredict, std::vector<int>& outputPredict);
 	int predict(Cloud& cloud2predict, std::vector<int>& outputPredict);
+	int predict(std::vector<Cloud>& InClouds, std::vector<std::vector<int>>& vecOutputPredict);
 	int train();
 	int test();
 

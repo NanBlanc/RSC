@@ -16,41 +16,50 @@ int main(int argc, char **argv)
 
 	std::cerr.precision(12);
 
-	InArgs flags = Tools::ArgParser(argc, argv);
-	//std::cerr << "falgs : ";
-	//std::cerr << flags.projectPath << "," << flags.train << "," << flags.saveModel << ","
-	//	<< flags.savePath << "," << flags.predict << "," << flags.loadModel << "," << flags.loadPath << ",\n";
+	InArgs flags = Tools::argParser(argc, argv);
+	std::cerr << "flags : ";
+	std::cerr << flags.projectPath << "," << flags.train << "," << flags.saveModel << ","
+		<< flags.savePath << "," << flags.predict << "," << flags.loadModel << "," << flags.loadPath << "**\n";
 
-
-
-	//load clouds
-	Cloud cloud2Predict("C:/Users/hobbe/Desktop/RSC_test/Projet_test/road_sub2.txt");
-
-	GroundTruth GT("");
-	GT.addCloud(Cloud("C:/Users/hobbe/Desktop/RSC_test/Projet_test/vertite_terrain/1/road_sub2_class_bat.txt"), 1);
-	GT.addCloud(Cloud("C:/Users/hobbe/Desktop/RSC_test/Projet_test/vertite_terrain/2/road_sub2_class_veget.txt"), 2);
-	GT.addCloud(Cloud("C:/Users/hobbe/Desktop/RSC_test/Projet_test/vertite_terrain/3/road_sub2_class_sol.txt"), 3);
-	//GT.addCloud(Cloud("C:/Users/hobbe/Desktop/RSC_test/Projet_test/vertite_terrain/1/road_sub2_class_bat_50pt.txt"), 1);
-	//GT.addCloud(Cloud("C:/Users/hobbe/Desktop/RSC_test/Projet_test/vertite_terrain/2/road_sub2_class_veget_15pt.txt"), 2);
-	//GT.addCloud(Cloud("C:/Users/hobbe/Desktop/RSC_test/Projet_test/vertite_terrain/3/road_sub2_class_sol_15pt.txt"), 3);
-
-
-
-	//compute normals
-	cloud2Predict.computeDensity(1);
-	cloud2Predict.computeNormals();
-
-	for (int i = 0; i < GT.m_ptrsCloud.size(); i++)
+	//load and compute att of GT
+	GroundTruth GT;
+	if (flags.train) 
 	{
-		GT.m_ptrsCloud[i].computeDensity(1);
-		GT.m_ptrsCloud[i].computeNormals();
-		std::cerr << GT.m_ptrsCloud[i].XYZRGBACloud->points[0] << GT.m_ptrsCloud[i].intensityCloud->points[0].intensity << GT.m_ptrsCloud[i].normalsCloud->points[0] << "\n";
+		GT = GroundTruth(flags.projectPath);
+		//std::map<int, std::string>::iterator it = GT.m_labelName.begin();
+		//std::cout << "GT.m_labelName contains:\n";
+		//for (it = GT.m_labelName.begin(); it != GT.m_labelName.end(); ++it)
+		//	std::cout << it->first << " => " << it->second << '\n';
+
+		//compute geom att
+		for (int i = 0; i < GT.m_ptrsCloud.size(); i++)
+		{
+			//GT.m_ptrsCloud[i].computeDensity(1);
+			GT.m_ptrsCloud[i].computeNormals();
+			std::cerr << GT.m_ptrsCloud[i].path << "\n" << GT.m_ptrsCloud[i].XYZRGBACloud->points[0] << GT.m_ptrsCloud[i].intensityCloud->points[0].intensity << GT.m_ptrsCloud[i].normalsCloud->points[0] << "\n";
+		}
+	}
+
+	//load and compute att of clouds to classify
+	std::vector<Cloud> ptrInClouds;
+	if (flags.predict) {
+		//load clouds to classify
+		std::string inCloudsFolderPath = flags.projectPath + "\\in_clouds";
+		Tools::readCloudsInFolder(inCloudsFolderPath, ptrInClouds);
+
+		//compute geom attribute
+		for (int i = 0; i < ptrInClouds.size(); i++)
+		{
+			//ptrInClouds[i].computeDensity(1);
+			ptrInClouds[i].computeNormals();
+			std::cerr << ptrInClouds[i].path << "\n" << ptrInClouds[i].XYZRGBACloud->points[0] << ptrInClouds[i].intensityCloud->points[0].intensity << ptrInClouds[i].normalsCloud->points[0] << "\n";
+		}
 	}
 
 
 	//openCV
 	//classifier
-	Classifier C_RF(GT, Classifier::AlgoType::RF, 0.2,flags.loadModel);
+	Classifier C_RF(GT, Classifier::AlgoType::RF,flags,0.2);
 
 	//train
 	if (flags.train) {
@@ -74,7 +83,7 @@ int main(int argc, char **argv)
 	if (flags.saveModel) {
 		std::cerr << "Saving ... ";
 		t0 = clock();
-		C_RF.save("C:/Users/hobbe/Desktop/RSC_test/Projet_test/models2.yml");
+		C_RF.save(flags.savePath);
 		t1 = clock();
 		std::cerr << (t1 - t0) / static_cast<float>(CLOCKS_PER_SEC) << "s" << std::endl;
 	}
@@ -82,22 +91,25 @@ int main(int argc, char **argv)
 
 	//predict
 	if (flags.predict) {
-		std::vector<int> predict_output;
+		std::vector<std::vector<int>> predict_output;
 
 		std::cerr << "Prediction ... ";
 		t0 = clock();
-		C_RF.predict(cloud2Predict, predict_output);
+		C_RF.predict(ptrInClouds, predict_output);
 		t1 = clock();
 		std::cerr << (t1 - t0) / static_cast<float>(CLOCKS_PER_SEC) << "s" << std::endl;
 
 		//out
-		cloud2Predict.savePredictedLabels(predict_output);
-		std::ofstream output("C:/Users/hobbe/Desktop/RSC_test/Projet_test/road_sub2_predict_rf_new.txt", std::ios::out | std::ios::trunc);
-		output << "//X Y Z R G B A Intensity NX NY NZ Label\n";
-		cloud2Predict.printFullCloud(output);
+		Tools::createFolder(std::string(flags.projectPath + "\\out_clouds").c_str());
+		for (int i = 0; i < ptrInClouds.size(); i++) {
+			//apply results
+			ptrInClouds[i].savePredictedLabels(predict_output[i]);
+			//print out
+			ptrInClouds[i].saveTxt(flags.projectPath);
+		}
+
 	}
 
-	//std::cerr << error;
-	std::cerr << "---/-/-/-/-/END\\-\\-\\-\\-\\-\\---\n";
+	std::cerr << "---\\-\\-\\-\\-\\END/-/-/-/-/-/---\n";
 	return 0;
 }

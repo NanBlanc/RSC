@@ -1,11 +1,12 @@
 #include "Classifier.h"
 
-Classifier::Classifier(GroundTruth GT, Classifier::AlgoType algoType, double splitRatio,bool loaded) : m_algoType(algoType)
+Classifier::Classifier(GroundTruth GT, Classifier::AlgoType algoType, InArgs flags, double splitRatio ) : m_algoType(algoType)
 {
-	if(loaded)
+	if(flags.loadModel)
 	{
+		std::cerr << "aaaaaaa: " << flags.loadPath << "\n";
 		this->m_model = cv::Ptr<cv::ml::RTrees>();
-		this->load("C:/Users/hobbe/Desktop/RSC_test/Projet_test/models2.yml");
+		this->load(flags.loadPath);
 	}
 	else
 	{
@@ -197,6 +198,18 @@ int Classifier::printClassifierDescriptor(std::ostream &flux)
 	return 0;
 }
 
+int Classifier::predict(std::vector<Cloud>& ptrInClouds, std::vector<std::vector<int>>& vecOutputPredict)
+{
+	
+	for (int i = 0; i < ptrInClouds.size(); i++)
+	{
+		std::vector<int> outputPredict;
+		predict(ptrInClouds[i], outputPredict);
+		vecOutputPredict.push_back(outputPredict);
+	}
+	return 0;
+}
+
 int Classifier::predict(Cloud& cloud2predict, std::vector<int>& outputPredict)
 {
 	cv::Mat inputPredict = formatInput(cloud2predict);
@@ -222,11 +235,16 @@ int Classifier::predict(cv::Mat& inputPredict, std::vector<int>& outputPredict)
 
 int Classifier::load(std::string loadPath)
 {
-	this->m_model=cv::ml::StatModel::load<cv::ml::RTrees>("C:/Users/hobbe/Desktop/RSC_test/Projet_test/models.yml");
+	this->m_model=cv::ml::StatModel::load<cv::ml::RTrees>(loadPath);
 	return 0;
 }
 int Classifier::save(std::string savePath)
 {
-	this->m_model->save(savePath);
+	Tools::createFolder(savePath.c_str());
+	int modelNumber = Tools::getFileNumberInFolder(savePath);
+	std::string modelPath = savePath + "\\RF_model_" + std::to_string(modelNumber);
+	this->m_model->save(modelPath+".yml");
+	std::ofstream output(modelPath+"_descriptor.txt", std::ios::out | std::ios::trunc);
+	this->printClassifierDescriptor(output);
 	return 0;
 }

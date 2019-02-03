@@ -1,22 +1,13 @@
 #pragma once
-
-//#include <iostream>
-//#include <pcl/io/pcd_io.h>
-//#include <pcl/point_types.h>
-//#include <liblas/liblas.hpp>
-//
-//#include <pcl/features/normal_3d.h>
-//#include <pcl/kdtree/kdtree.h>
-//#include <pcl/kdtree/kdtree_flann.h>
-//
-//#include <opencv2/core.hpp>
-//#include <opencv2/ml.hpp>
-//#include <opencv2/dnn.hpp>
-//#include "Cloud.h"
+#include "Cloud.h" //WARNING :: NEED TO BE BEFOERE #include <windows.h> or PCL and FLANN CRASH DURING COMPILATION
 
 #include <iostream>
 #include <string>
-#include <windows.h>
+
+#include <stdio.h>
+#include <boost/filesystem.hpp>
+#include <vector>
+
 
 struct InArgs{
 	std::string projectPath="";
@@ -31,11 +22,27 @@ struct InArgs{
 	 
 };
 
+
+
 class Tools {
 public:
-	static InArgs ArgParser(int argc, char** argv);
+	static InArgs argParser(int argc, char** argv);
 	static void exitRSC(std::string message);
 	static void printHelp();
+	static void createFolder(const char * path);
+	static void readDirectory(const std::string& name, std::vector<std::string>& v);
+	static void readDirectoryExtension(const boost::filesystem::path& root, const std::string& ext, std::vector<boost::filesystem::path>& ret);
+	static void easterEgg();
+	static void readCloudsInFolder(const std::string& folderPath, std::vector<Cloud>& outPtrClouds);
+	static int getFileNumberInFolder(const std::string& folderPath);
+private :
+	struct path_leaf_string
+	{
+		std::string operator()(const boost::filesystem::directory_entry& entry) const
+		{
+			return entry.path().leaf().string();
+		}
+	};
 };
 
 //enum AlgoType { RF, SIG_SVM };

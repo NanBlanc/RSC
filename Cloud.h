@@ -10,6 +10,8 @@
 #include <pcl/features/normal_3d.h>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <opencv2/core.hpp>
+#include <boost/filesystem.hpp>
+
 
 class Cloud {
 public:
@@ -26,6 +28,7 @@ public:
 	int savePredictedLabels(cv::Mat matPredictedLabels);
 	int Cloud::savePredictedLabels(std::vector<int> vecPredictedLabels);
 
+	void saveTxt(std::string projectPath);
 	int printFullCloud(std::ostream &flux);
 
 //protected:

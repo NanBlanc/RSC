@@ -19,30 +19,50 @@ public:
 
 	Classifier(GroundTruth GT, AlgoType algoType, InArgs flags, double splitRatio = 0.2);
 
-	int predict(cv::Mat& inputPredict, std::vector<int>& outputPredict);
-	int predict(Cloud& cloud2predict, std::vector<int>& outputPredict);
-	int predict(std::vector<Cloud>& InClouds, std::vector<std::vector<int>>& vecOutputPredict);
-	int train();
-	int test();
+	void predict(cv::Mat& inputPredict, std::vector<int>& outputPredict);
+	void predict(Cloud& cloud2predict, std::vector<int>& outputPredict);
+	void predict(std::vector<Cloud>& InClouds, std::vector<std::vector<int>>& vecOutputPredict);
+	void train();
+	void test();
 
-	int load(std::string loadPath);
-	int save(std::string savePath);
+	void load(std::string loadPath);
+	void save(std::string savePath);
 
-	int printClassifierDescriptor(std::ostream &flux);
+	void printClassifierDescriptor(std::ostream &flux);
 
-	//protected:
-	int computeClassifierDescriptor(std::vector<int> error_output);
-	cv::Mat formatInput(Cloud const& cloud);
+	//getter
+	AlgoType algoType();
+	cv::Ptr<cv::ml::RTrees> model();
+	cv::Ptr<cv::ml::TrainData> trainData();
+	cv::Mat testResponse();
+	cv::Mat confusionMatrix();
+	double overallPrecision();
+	double kappaIndice();
+	cv::Mat	dimensionImportance();
+
+	//setter
+	void setAlgoType(AlgoType algoType);
+	void setModel(cv::Ptr<cv::ml::RTrees> model);
+	void setTrainData(cv::Ptr<cv::ml::TrainData> trainData);
+	void setTestResponse(cv::Mat testResponse);
+	void setConfusionMatrix(cv::Mat confusionMatrix);
+	void setOverallPrecision(double overallPrecision);
+	void setKappaIndice(double kappaIndice);
+	void setDimensionImportance(cv::Mat	dimensionImportance);
+
+protected:
+	void computeClassifierDescriptor(std::vector<int> error_output);
+	cv::Mat formatInput(Cloud cloud);
 	cv::Ptr<cv::ml::RTrees> createModels(AlgoType AT);
 
 	AlgoType m_algoType;
 	cv::Ptr<cv::ml::RTrees> m_model;
 	cv::Ptr<cv::ml::TrainData> m_trainData;
-	cv::Mat testResponse;
+	cv::Mat m_testResponse;
 
-	cv::Mat confusionMatrix;
-	double overallPrecision;
-	double kappaIndice;
-	cv::Mat	dimensionImportance;
+	cv::Mat m_confusionMatrix;
+	double m_overallPrecision;
+	double m_kappaIndice;
+	cv::Mat	m_dimensionImportance;
 
 };

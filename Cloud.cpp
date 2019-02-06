@@ -2,48 +2,48 @@
 
 Cloud::Cloud()
 {
-	XYZRGBACloud = pcl::PointCloud<pcl::PointXYZRGBA>::Ptr(new pcl::PointCloud<pcl::PointXYZRGBA>);
-	intensityCloud = pcl::PointCloud<pcl::Intensity>::Ptr(new pcl::PointCloud<pcl::Intensity>);
-	normalsCloud = pcl::PointCloud<pcl::Normal>::Ptr(new pcl::PointCloud<pcl::Normal>);
-	kdtreeCloud = pcl::search::KdTree<pcl::PointXYZRGBA>::Ptr(new pcl::search::KdTree<pcl::PointXYZRGBA>);
-	density = std::vector<int>();
-	label = std::vector<int>();
-	path = "";
+	m_XYZRGBACloud = pcl::PointCloud<pcl::PointXYZRGBA>::Ptr(new pcl::PointCloud<pcl::PointXYZRGBA>);
+	m_intensityCloud = pcl::PointCloud<pcl::Intensity>::Ptr(new pcl::PointCloud<pcl::Intensity>);
+	m_normalsCloud = pcl::PointCloud<pcl::Normal>::Ptr(new pcl::PointCloud<pcl::Normal>);
+	m_kdtreeCloud = pcl::search::KdTree<pcl::PointXYZRGBA>::Ptr(new pcl::search::KdTree<pcl::PointXYZRGBA>);
+	m_density = std::vector<int>();
+	m_label = std::vector<int>();
+	m_path = "";
 }
 Cloud::Cloud(std::string in_path, bool SkipFirst, bool skipA)
 {
-	XYZRGBACloud = pcl::PointCloud<pcl::PointXYZRGBA>::Ptr(new pcl::PointCloud<pcl::PointXYZRGBA>);
-	intensityCloud = pcl::PointCloud<pcl::Intensity>::Ptr(new pcl::PointCloud<pcl::Intensity>);
-	normalsCloud = pcl::PointCloud<pcl::Normal>::Ptr(new pcl::PointCloud<pcl::Normal>);
-	kdtreeCloud = pcl::search::KdTree<pcl::PointXYZRGBA>::Ptr(new pcl::search::KdTree<pcl::PointXYZRGBA>);
-	density = std::vector<int>();
-	label = std::vector<int>();
-	path = in_path;
+	m_XYZRGBACloud = pcl::PointCloud<pcl::PointXYZRGBA>::Ptr(new pcl::PointCloud<pcl::PointXYZRGBA>);
+	m_intensityCloud = pcl::PointCloud<pcl::Intensity>::Ptr(new pcl::PointCloud<pcl::Intensity>);
+	m_normalsCloud = pcl::PointCloud<pcl::Normal>::Ptr(new pcl::PointCloud<pcl::Normal>);
+	m_kdtreeCloud = pcl::search::KdTree<pcl::PointXYZRGBA>::Ptr(new pcl::search::KdTree<pcl::PointXYZRGBA>);
+	m_density = std::vector<int>();
+	m_label = std::vector<int>();
+	m_path = in_path;
 
 	readCloudXYZRGBAIFromTxt(SkipFirst, skipA);
 }
 Cloud::Cloud(Cloud const& cloud)
 {
-	XYZRGBACloud = cloud.XYZRGBACloud;
-	intensityCloud = cloud.intensityCloud;
-	normalsCloud = cloud.normalsCloud;
-	kdtreeCloud = cloud.kdtreeCloud;
-	density = cloud.density;
-	label = cloud.label;
-	path = cloud.path;
+	m_XYZRGBACloud = cloud.m_XYZRGBACloud;
+	m_intensityCloud = cloud.m_intensityCloud;
+	m_normalsCloud = cloud.m_normalsCloud;
+	m_kdtreeCloud = cloud.m_kdtreeCloud;
+	m_density = cloud.m_density;
+	m_label = cloud.m_label;
+	m_path = cloud.m_path;
 }
 
-int Cloud::readCloudXYZRGBAIFromTxt(bool SkipFirst, bool skipA) 
+void Cloud::readCloudXYZRGBAIFromTxt(bool SkipFirst, bool skipA) 
 {
-	XYZRGBACloud->is_dense = false;
-	intensityCloud->is_dense = false;
+	m_XYZRGBACloud->is_dense = false;
+	m_intensityCloud->is_dense = false;
 	//1.ouverture du flux du fichier de centroide
-	std::ifstream flux_in(path.c_str(), std::ios::in);
+	std::ifstream flux_in(m_path.c_str(), std::ios::in);
 
 	if (flux_in.fail())
 	{
 		std::cerr << "erreur au chargement du nuage " << std::endl;
-		return 1;
+		return;
 	}
 	flux_in.precision(12);
 
@@ -96,8 +96,8 @@ int Cloud::readCloudXYZRGBAIFromTxt(bool SkipFirst, bool skipA)
 		pti.intensity = tempDouble;
 		//std::cerr << "tempDouble " << tempDouble << "\n";
 
-		XYZRGBACloud->points.push_back(pt);
-		intensityCloud->points.push_back(pti);
+		m_XYZRGBACloud->points.push_back(pt);
+		m_intensityCloud->points.push_back(pti);
 
 		//if (compteur == 0)
 
@@ -109,30 +109,30 @@ int Cloud::readCloudXYZRGBAIFromTxt(bool SkipFirst, bool skipA)
 	flux_in.close();
 
 
-	return 0;
+	return;
 }
 
-int Cloud::computeKdTree()
+void Cloud::computeKdTree()
 {
-	kdtreeCloud->setInputCloud(XYZRGBACloud); //this builds the kdtree
-	return 0;
+	m_kdtreeCloud->setInputCloud(m_XYZRGBACloud); //this builds the kdtree
+	return;
 }
-int Cloud::computeDensity(float radius)
+void Cloud::computeDensity(float radius)
 {
 	//pre-allocate the neighbor index and distance vector and density
-	if (this->kdtreeCloud->getInputCloud() == nullptr) {
+	if (this->m_kdtreeCloud->getInputCloud() == nullptr) {
 		//std::cerr << "\nWARNING : FCT COMPUTE DENSITY : NO INPUT CLOUD IN KDTREE\n";
 		this->computeKdTree();
 	}
 
 	std::vector<int> pointIdx;
 	std::vector<float> pointSquaredD;
-	density.reserve(XYZRGBACloud->size());
+	m_density.reserve(m_XYZRGBACloud->size());
 	//search
 
-	for (int i = 0; i < XYZRGBACloud->size(); i++)
+	for (int i = 0; i < m_XYZRGBACloud->size(); i++)
 	{
-		kdtreeCloud->radiusSearch(XYZRGBACloud->points[i], radius, pointIdx, pointSquaredD);
+		m_kdtreeCloud->radiusSearch(m_XYZRGBACloud->points[i], radius, pointIdx, pointSquaredD);
 		//if (i < 2)
 		//{
 		//	for (int j = 0; j < 10; j++)
@@ -140,72 +140,98 @@ int Cloud::computeDensity(float radius)
 		//		std::cerr << "i: " << i << "j: " << j << " : " << pointIdx[j] << ", " << pointSquaredD[j] << "\n";
 		//	}
 		//}
-		density[i] = pointIdx.size();
+		m_density[i] = pointIdx.size();
 	}
-	return 0;
+	return;
 }
-int Cloud::computeNormals()
+void Cloud::computeNormals()
 {
+	//pre-allocate the neighbor index and distance vector and density
+	if (this->m_kdtreeCloud->getInputCloud() == nullptr) {
+		//std::cerr << "\nWARNING : FCT COMPUTE DENSITY : NO INPUT CLOUD IN KDTREE\n";
+		this->computeKdTree();
+	}
 	// Create the normal estimation class, and pass the input dataset to it
 	pcl::NormalEstimation<pcl::PointXYZRGBA, pcl::Normal> ne;
-	ne.setInputCloud(XYZRGBACloud);
+	ne.setInputCloud(m_XYZRGBACloud);
 	// Create an empty kdtree representation, and pass it to the normal estimation object.
 	// Its content will be filled inside the object, based on the given input dataset (as no other search surface is given).
 
-	ne.setSearchMethod(kdtreeCloud);
+	ne.setSearchMethod(m_kdtreeCloud);
 
 	// Use all neighbors in a sphere of radius 3cm
-	ne.setRadiusSearch(1);
+	ne.setKSearch(25);
 	//set view point
 	ne.setViewPoint(812.994, 599.005, 27.857);
 	// Compute the features
-	ne.compute(*normalsCloud);
+	ne.compute(*m_normalsCloud);
 	//for (int i = 0; i < 10; i++)
 	//{
 	//	std::cout << "curv : " << cloud_normals->points[i].curvature << ", normal : " << cloud_normals->points[i].normal << ", x: " << cloud_normals->points[i].normal_x << ", y:" << cloud_normals->points[i].normal_y << ", z:" << cloud_normals->points[i].normal_z << "\n";
 	//}
-	return 0;
+	return;
 }
 
-int Cloud::savePredictedLabels(cv::Mat matPredictedLabels) {
+void Cloud::savePredictedLabels(cv::Mat matPredictedLabels) {
 	for (int i = 0; i < matPredictedLabels.rows; i++)// matPredictedLabels.rows
 	{
-		this->label.push_back(matPredictedLabels.at<float>(i, 0));
+		this->m_label.push_back(matPredictedLabels.at<float>(i, 0));
 	}
-	return 0;
+	return;
 }
 
-int Cloud::savePredictedLabels(std::vector<int> vecPredictedLabels) {
+void Cloud::savePredictedLabels(std::vector<int> vecPredictedLabels) {
 	for (int i = 0; i < vecPredictedLabels.size(); i++)// matPredictedLabels.rows
 	{
-		this->label.push_back(vecPredictedLabels[i]);
+		this->m_label.push_back(vecPredictedLabels[i]);
 	}
-	return 0;
+	return;
 }
 
-int Cloud::printFullCloud(std::ostream &flux)
+void Cloud::printFullCloud(std::ostream &flux)
 {
 	flux.precision(12);
-	for (int i = 0; i < this->XYZRGBACloud->size(); i++)//this->XYZRGBACloud->size()
+	for (int i = 0; i < this->m_XYZRGBACloud->size(); i++)//this->XYZRGBACloud->size()
 	{
 		//flux << "1";
-		flux << this->XYZRGBACloud->points[i].x << " " << this->XYZRGBACloud->points[i].y << " " << this->XYZRGBACloud->points[i].z << " "
-			<< (int)this->XYZRGBACloud->points[i].r << " " << (int)this->XYZRGBACloud->points[i].g << " " << (int)this->XYZRGBACloud->points[i].b << " "
-			<< (int)this->XYZRGBACloud->points[i].a << " " << this->intensityCloud->points[i].intensity << " " << this->normalsCloud->points[i].normal_x << " "
-			<< this->normalsCloud->points[i].normal_y << " " << this->normalsCloud->points[i].normal_z << " " << this->label[i] << "\n";
+		flux << this->m_XYZRGBACloud->points[i].x << " " << this->m_XYZRGBACloud->points[i].y << " " << this->m_XYZRGBACloud->points[i].z << " "
+			<< (int)this->m_XYZRGBACloud->points[i].r << " " << (int)this->m_XYZRGBACloud->points[i].g << " " << (int)this->m_XYZRGBACloud->points[i].b << " "
+			<< (int)this->m_XYZRGBACloud->points[i].a << " " << this->m_intensityCloud->points[i].intensity << " " << this->m_normalsCloud->points[i].normal_x << " "
+			<< this->m_normalsCloud->points[i].normal_y << " " << this->m_normalsCloud->points[i].normal_z << " " << this->m_label[i] << "\n";
 	}
-	return 0;
+	return;
 }
 
 void Cloud::saveTxt(std::string projectPath)
 {
-	boost::filesystem::path p(this->path);
+	boost::filesystem::path p(this->m_path);
 	std::string cloudName = p.filename().string();
 	std::string outPath = projectPath + "\\out_clouds";
-	std::cerr << "OUT::" << outPath << "\\" << cloudName << "\n";
+	std::cerr << "Saving " << outPath << "\\" << cloudName << " ... ";
 
 
+	clock_t t0 = clock();
 	std::ofstream output(outPath +"\\"+cloudName, std::ios::out | std::ios::trunc);
 	output << "//X Y Z R G B A Intensity NX NY NZ Label\n";
 	this->printFullCloud(output);
+	clock_t t1 = clock();
+	std::cerr << (t1 - t0) / static_cast<float>(CLOCKS_PER_SEC) << "s" << std::endl;
 }
+
+
+pcl::PointCloud<pcl::PointXYZRGBA>::Ptr Cloud::XYZRGBACloud() { return m_XYZRGBACloud; }
+pcl::PointCloud<pcl::Intensity>::Ptr Cloud::intensityCloud() { return m_intensityCloud; }
+pcl::PointCloud<pcl::Normal>::Ptr Cloud::normalsCloud() { return m_normalsCloud; }
+pcl::search::KdTree<pcl::PointXYZRGBA>::Ptr Cloud::kdtreeCloud() { return m_kdtreeCloud; }
+std::vector<int> Cloud::density() { return m_density; }
+std::vector<int> Cloud::label() { return m_label; }
+std::string Cloud::path() { return m_path; }
+
+//setter
+void Cloud::setXYZRGBACloud(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr XYZRGBACloud) { m_XYZRGBACloud = XYZRGBACloud; }
+void Cloud::setIntensityCloud(pcl::PointCloud<pcl::Intensity>::Ptr intensityCloud) { m_intensityCloud = intensityCloud; }
+void Cloud::setNormalsCloud(pcl::PointCloud<pcl::Normal>::Ptr normalsCloud) { m_normalsCloud = normalsCloud; }
+void Cloud::setKdtreeCloud(pcl::search::KdTree<pcl::PointXYZRGBA>::Ptr kdtreeCloud) { m_kdtreeCloud = kdtreeCloud; }
+void Cloud::setDensity(std::vector<int> density) { m_density = density; }
+void Cloud::setLabel(std::vector<int> label) { m_label = label; }
+void Cloud::setPath(std::string path) { m_path = path; }

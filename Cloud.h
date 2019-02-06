@@ -19,25 +19,42 @@ public:
 	Cloud(std::string in_path, bool SkipFirst=true, bool skipA=true);
 	Cloud(Cloud const& cloud);
 
-	int readCloudXYZRGBAIFromTxt(bool SkipFirst, bool skipA);
+	void readCloudXYZRGBAIFromTxt(bool SkipFirst, bool skipA);
 
-	int computeKdTree();
-	int computeDensity(float radius);
-	int computeNormals();
+	void computeKdTree();
+	void computeDensity(float radius);
+	void computeNormals();
 
-	int savePredictedLabels(cv::Mat matPredictedLabels);
-	int Cloud::savePredictedLabels(std::vector<int> vecPredictedLabels);
+	void savePredictedLabels(cv::Mat matPredictedLabels);
+	void Cloud::savePredictedLabels(std::vector<int> vecPredictedLabels);
 
 	void saveTxt(std::string projectPath);
-	int printFullCloud(std::ostream &flux);
+	void printFullCloud(std::ostream &flux);
 
-//protected:
-	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr XYZRGBACloud;
-	pcl::PointCloud<pcl::Intensity>::Ptr intensityCloud;
-	pcl::PointCloud<pcl::Normal>::Ptr normalsCloud;
-	pcl::search::KdTree<pcl::PointXYZRGBA>::Ptr kdtreeCloud;
-	std::vector<int> density;
-	std::vector<int> label;
-	std::string path;
+	//getter
+	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr XYZRGBACloud();
+	pcl::PointCloud<pcl::Intensity>::Ptr intensityCloud();
+	pcl::PointCloud<pcl::Normal>::Ptr normalsCloud();
+	pcl::search::KdTree<pcl::PointXYZRGBA>::Ptr kdtreeCloud();
+	std::vector<int> density();
+	std::vector<int> label();
+	std::string path();
 
-};
+	//setter
+	void setXYZRGBACloud(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr XYZRGBACloud);
+	void setIntensityCloud(pcl::PointCloud<pcl::Intensity>::Ptr intensityCloud);
+	void setNormalsCloud(pcl::PointCloud<pcl::Normal>::Ptr normalsCloud);
+	void setKdtreeCloud(pcl::search::KdTree<pcl::PointXYZRGBA>::Ptr kdtreeCloud);
+	void setDensity(std::vector<int> density);
+	void setLabel(std::vector<int> label);
+	void setPath(std::string path);
+	   
+protected:
+	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr m_XYZRGBACloud;
+	pcl::PointCloud<pcl::Intensity>::Ptr m_intensityCloud;
+	pcl::PointCloud<pcl::Normal>::Ptr m_normalsCloud;
+	pcl::search::KdTree<pcl::PointXYZRGBA>::Ptr m_kdtreeCloud;
+	std::vector<int> m_density;
+	std::vector<int> m_label;
+	std::string m_path;
+	};

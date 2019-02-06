@@ -7,7 +7,7 @@
 
 int main(int argc, char **argv)
 {
-	std::cerr << "---/-/-/-/-/RSC\\-\\-\\-\\-\\-\\---\n";
+	std::cerr << "---/-/-/-/-/RSC Version 1.0\\-\\-\\-\\-\\-\\---\n";
 	//testLibLas();
 	//testPCL();
 	//testOpenCV();
@@ -17,9 +17,9 @@ int main(int argc, char **argv)
 	std::cerr.precision(12);
 
 	InArgs flags = Tools::argParser(argc, argv);
-	std::cerr << "flags : ";
-	std::cerr << flags.projectPath << "," << flags.train << "," << flags.saveModel << ","
-		<< flags.savePath << "," << flags.predict << "," << flags.loadModel << "," << flags.loadPath << "**\n";
+	std::cerr << "flags : (0 = false, 1 = true)\n";
+	std::cerr << "Project : "<<flags.projectPath << "\nTrain : " << flags.train << "; save model : " << flags.saveModel << ", path : "
+		<< flags.savePath << "\nPredict : " << flags.predict << "; load model : " << flags.loadModel << ", path : " << flags.loadPath << "\n";
 
 	//load and compute att of GT
 	GroundTruth GT;
@@ -32,12 +32,16 @@ int main(int argc, char **argv)
 		//	std::cout << it->first << " => " << it->second << '\n';
 
 		//compute geom att
-		for (int i = 0; i < GT.m_ptrsCloud.size(); i++)
+		std::cerr << "Computing Ground_Truth attributs ... ";
+		t0 = clock();
+		for (int i = 0; i < GT.ptrsCloud().size(); i++)
 		{
 			//GT.m_ptrsCloud[i].computeDensity(1);
-			GT.m_ptrsCloud[i].computeNormals();
-			std::cerr << GT.m_ptrsCloud[i].path << "\n" << GT.m_ptrsCloud[i].XYZRGBACloud->points[0] << GT.m_ptrsCloud[i].intensityCloud->points[0].intensity << GT.m_ptrsCloud[i].normalsCloud->points[0] << "\n";
+			GT.ptrsCloud()[i].computeNormals();
+			//std::cerr << GT.m_ptrsCloud[i].path << "\n" << GT.m_ptrsCloud[i].XYZRGBACloud->points[0] << GT.m_ptrsCloud[i].intensityCloud->points[0].intensity << GT.m_ptrsCloud[i].normalsCloud->points[0] << "\n";
 		}
+		t1 = clock();
+		std::cerr << (t1 - t0) / static_cast<float>(CLOCKS_PER_SEC) << "s" << std::endl;
 	}
 
 	//load and compute att of clouds to classify
@@ -48,14 +52,17 @@ int main(int argc, char **argv)
 		Tools::readCloudsInFolder(inCloudsFolderPath, ptrInClouds);
 
 		//compute geom attribute
+		std::cerr << "Computing In_Clouds attributs ... ";
+		t0 = clock();
 		for (int i = 0; i < ptrInClouds.size(); i++)
 		{
 			//ptrInClouds[i].computeDensity(1);
 			ptrInClouds[i].computeNormals();
-			std::cerr << ptrInClouds[i].path << "\n" << ptrInClouds[i].XYZRGBACloud->points[0] << ptrInClouds[i].intensityCloud->points[0].intensity << ptrInClouds[i].normalsCloud->points[0] << "\n";
+			//std::cerr << ptrInClouds[i].path << "\n" << ptrInClouds[i].XYZRGBACloud->points[0] << ptrInClouds[i].intensityCloud->points[0].intensity << ptrInClouds[i].normalsCloud->points[0] << "\n";
 		}
+		t1 = clock();
+		std::cerr << (t1 - t0) / static_cast<float>(CLOCKS_PER_SEC) << "s" << std::endl;
 	}
-
 
 	//openCV
 	//classifier
@@ -81,12 +88,13 @@ int main(int argc, char **argv)
 
 	//saving
 	if (flags.saveModel) {
-		std::cerr << "Saving ... ";
+		std::cerr << "Saving model ... ";
 		t0 = clock();
 		C_RF.save(flags.savePath);
 		t1 = clock();
 		std::cerr << (t1 - t0) / static_cast<float>(CLOCKS_PER_SEC) << "s" << std::endl;
 	}
+
 
 
 	//predict
@@ -101,6 +109,7 @@ int main(int argc, char **argv)
 
 		//out
 		Tools::createFolder(std::string(flags.projectPath + "\\out_clouds").c_str());
+		std::cerr << "Out_Clouds : \n";
 		for (int i = 0; i < ptrInClouds.size(); i++) {
 			//apply results
 			ptrInClouds[i].savePredictedLabels(predict_output[i]);

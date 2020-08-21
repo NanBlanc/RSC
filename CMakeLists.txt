@@ -11,19 +11,21 @@ include_directories(
 "C:/programmation/lib/VTK/include"
 "C:/programmation/lib/FLANN/include"
 "C:/programmation/lib/Boost/include"
-"C:/programmation/lib/PCL_ALTA/include"
+"C:/programmation/lib/PCL/include"
 "C:/programmation/lib/OSGEO/x64/include"
-"C:/programmation/lib/OpenCV_ALTA/include"
+"C:/programmation/lib/OpenCV/include"
+"C:/programmation/lib/PDAL/include/pdal"
 )
 
 #link all lib
 link_directories(
 C:/programmation/lib/VTK/lib/x64/Release
 C:/programmation/lib/Boost/lib/x64/Release
-C:/programmation/lib/PCL_ALTA/lib/x64/Release
+C:/programmation/lib/PCL/lib/x64/Release
 C:/programmation/lib/FLANN/lib/x64/Release
-C:/programmation/lib/OpenCV_ALTA/lib/x64/Release
+C:/programmation/lib/OpenCV/lib/x64/Release
 C:/programmation/lib/OSGEO/x64/lib
+C:/programmation/lib/PDAL/lib/x64/Release
 )
 
 # Add the executable
@@ -242,6 +244,10 @@ pcl_stereo_release.lib
 pcl_surface_release.lib
 pcl_tracking_release.lib
 pcl_visualization_release.lib
-liblas.lib
-liblas_c.lib
+pdalcpp.lib
+pdal_arbiter.lib
+pdal_boost.lib
+pdal_jsoncpp.lib
+pdal_kazhdan.lib
+pdal_util.lib
 )

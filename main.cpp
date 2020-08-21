@@ -4,6 +4,9 @@
 #include "GroundTruth.h"
 #include "fonctions.h"
 
+//pdal test
+
+
 
 int main(int argc, char **argv)
 {
@@ -20,6 +23,9 @@ int main(int argc, char **argv)
 	std::cerr << "flags : (0 = false, 1 = true)\n";
 	std::cerr << "Project : "<<flags.projectPath << "\nTrain : " << flags.train << "; save model : " << flags.saveModel << ", path : "
 		<< flags.savePath << "\nPredict : " << flags.predict << "; load model : " << flags.loadModel << ", path : " << flags.loadPath << "\n";
+
+	//test pdal
+
 
 	//load and compute att of GT
 	GroundTruth GT;

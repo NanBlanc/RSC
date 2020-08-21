@@ -146,6 +146,8 @@ void Classifier::computeClassifierDescriptor(std::vector<int> error_output)
 			confusion.at<float>(error_output[i] - 1, responses[i] - 1) += 1;
 	}
 
+	//std::cout << "M = " << std::endl << " " << confusion << std::endl << std::endl;
+
 	double totalSum = 0;
 	double niiSum = 0;
 	double lxcSum = 0;
@@ -176,7 +178,7 @@ void Classifier::computeClassifierDescriptor(std::vector<int> error_output)
 	double n = nb_label * nb_label;
 	this->m_confusionMatrix = confusion;
 	this->m_overallPrecision = niiSum / totalSum;
-	this->m_kappaIndice = std::abs(n*niiSum - lxcSum) / (n*n - lxcSum);
+	//this->m_kappaIndice = std::abs(n*niiSum - lxcSum) / (n*n - lxcSum);
 	this->m_dimensionImportance = this->m_model->getVarImportance();
 
 	return;
@@ -188,8 +190,8 @@ void Classifier::printClassifierDescriptor(std::ostream &flux)
 	flux << this->m_confusionMatrix << "\n";
 	flux << "Overall Precision : ";
 	flux << this->m_overallPrecision << "\n";
-	flux << "Kappa Indice : ";
-	flux << this->m_kappaIndice << "\n";
+	//flux << "Kappa Indice : ";
+	//flux << this->m_kappaIndice << "\n";
 	flux << "Attribute Importance : \n";
 	flux << "R;G;B;I;NX;NY;NZ\n";
 	flux << this->m_dimensionImportance.t() << "\n";
